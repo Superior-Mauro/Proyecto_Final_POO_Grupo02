@@ -6,19 +6,33 @@ public class Equipo {
     private String numeroSerie;
     private String marca;
     private String modelo;
-    private int stock;
-    private double precioUnitario;
+    private String aplicacion; // Minería o Agricultura
+    private double precioBase;
+    private int stockDisponible;
+    private int stockMinimo;
+    private String estado; // 'Disponible', 'Reservado', 'Mantenimiento'
+    private FichaTecnica fichaTecnica;
 
     public Equipo() {}
 
-    public Equipo(int idEquipo, String codigo, String numeroSerie, String marca, String modelo, int stock, double precioUnitario) {
+    public Equipo(int idEquipo, String codigo, String numeroSerie, String marca, String modelo, 
+                  String aplicacion, double precioBase, int stockDisponible, int stockMinimo, 
+                  String estado, FichaTecnica fichaTecnica) {
         this.idEquipo = idEquipo;
         this.codigo = codigo;
         this.numeroSerie = numeroSerie;
         this.marca = marca;
         this.modelo = modelo;
-        this.stock = stock;
-        this.precioUnitario = precioUnitario;
+        this.aplicacion = aplicacion;
+        this.precioBase = precioBase;
+        this.stockDisponible = stockDisponible;
+        this.stockMinimo = stockMinimo;
+        this.estado = estado;
+        this.fichaTecnica = fichaTecnica;
+    }
+
+    public boolean esStockCritico() {
+        return this.stockDisponible <= this.stockMinimo;
     }
 
     public int getIdEquipo() { return idEquipo; }
@@ -36,9 +50,26 @@ public class Equipo {
     public String getModelo() { return modelo; }
     public void setModelo(String modelo) { this.modelo = modelo; }
 
-    public int getStock() { return stock; }
-    public void setStock(int stock) { this.stock = stock; }
+    public String getAplicacion() { return aplicacion; }
+    public void setAplicacion(String aplicacion) { this.aplicacion = aplicacion; }
 
-    public double getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(double precioUnitario) { this.precioUnitario = precioUnitario; }
+    public double getPrecioBase() { return precioBase; }
+    public void setPrecioBase(double precioBase) { this.precioBase = precioBase; }
+
+    public int getStockDisponible() { return stockDisponible; }
+    public void setStockDisponible(int stockDisponible) { this.stockDisponible = stockDisponible; }
+
+    public int getStockMinimo() { return stockMinimo; }
+    public void setStockMinimo(int stockMinimo) { this.stockMinimo = stockMinimo; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+
+    public FichaTecnica getFichaTecnica() { return fichaTecnica; }
+    public void setFichaTecnica(FichaTecnica fichaTecnica) { this.fichaTecnica = fichaTecnica; }
+
+    @Override
+    public String toString() {
+        return codigo + " - " + marca + " " + modelo + " (Disp: " + stockDisponible + ")";
+    }
 }

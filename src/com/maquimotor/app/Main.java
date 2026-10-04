@@ -1,11 +1,11 @@
 package com.maquimotor.app;
 
-import com.maquimotor.vista.MenuPrincipal;
+import com.maquimotor.vista.LoginView;
 
 public class Main {
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
-            new MenuPrincipal().setVisible(true);
+            new LoginView().setVisible(true);
         });
     }
 }

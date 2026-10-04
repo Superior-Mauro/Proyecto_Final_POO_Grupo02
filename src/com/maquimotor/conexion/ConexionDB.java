@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ConexionDB {
-    private static final String URL = "jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=maquimotor_db;encrypt=true;trustServerCertificate=true;";
+    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=maquimotor_db;encrypt=true;trustServerCertificate=true;";
     private static final String USER = "sa";
-    private static final String PASS = "Admin123*"; // Asegúrate de que coincida con tu contraseña de SSMS
+    private static final String PASS = "Admin123*";
 
     public static Connection conectar() {
         Connection con = null;

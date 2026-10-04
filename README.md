@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="imagenes/logoMaquimotor.png" alt="Logo MaquiMotor Perú S.A.C." width="450"/>
+</p>
+
 # ⚙️ Sistema de Gestión de Inventario y Cotizaciones — MaquiMotor Perú S.A.C.
 
 Sistema de gestión desarrollado en **Java** para la administración de inventario de maquinaria industrial, clientes y cotizaciones comerciales.

@@ -33,7 +33,7 @@ public class InicializadorDB {
             "    direccionDespacho VARCHAR(150)" +
             ");",
 
-            // 3. Tabla FichaTecnica (UML: Composición con Equipo)
+            // 3. Tabla FichaTecnica
             "CREATE TABLE FichaTecnica (" +
             "    idFicha INT IDENTITY(1,1) PRIMARY KEY," +
             "    potenciaHP DECIMAL(10,2) NOT NULL," +
@@ -57,19 +57,20 @@ public class InicializadorDB {
             "    idFicha INT FOREIGN KEY REFERENCES FichaTecnica(idFicha)" +
             ");",
 
-            // 5. Tabla Cotizacion (RF-06 a RF-09)
+            // 5. Tabla Cotizacion (RF-06 a RF-09 con fechaVencimiento para reservas 48h)
             "CREATE TABLE Cotizacion (" +
             "    idCotizacion INT PRIMARY KEY," +
             "    idCliente INT FOREIGN KEY REFERENCES Cliente(idCliente)," +
             "    idUsuario INT FOREIGN KEY REFERENCES Usuario(idUsuario)," +
             "    fechaEmision DATETIME DEFAULT GETDATE()," +
+            "    fechaVencimiento DATETIME NULL," +
             "    estado VARCHAR(30) DEFAULT 'Vigente'," +
             "    subtotal DECIMAL(10,2) NOT NULL," +
             "    igv DECIMAL(10,2) NOT NULL," +
             "    total DECIMAL(10,2) NOT NULL" +
             ");",
 
-            // 6. Tabla DetalleCotizacion (Composición)
+            // 6. Tabla DetalleCotizacion
             "CREATE TABLE DetalleCotizacion (" +
             "    idDetalle INT IDENTITY(1,1) PRIMARY KEY," +
             "    idCotizacion INT FOREIGN KEY REFERENCES Cotizacion(idCotizacion)," +
@@ -88,7 +89,7 @@ public class InicializadorDB {
             "INSERT INTO FichaTecnica (potenciaHP, cilindrada, combustible, compatibilidad) VALUES (250.0, 6.7, 'Diésel', 'Excavadoras y grupos electrógenos');",
             "INSERT INTO FichaTecnica (potenciaHP, cilindrada, combustible, compatibilidad) VALUES (15.0, 1.2, 'Diésel', 'Bombas de alta presión');",
 
-            // Inserción de Equipos de prueba (uno en stock crítico: 2 <= 3)
+            // Inserción de Equipos de prueba
             "INSERT INTO Equipo (idEquipo, codigo, numeroSerie, marca, modelo, aplicacion, precioBase, stockDisponible, stockMinimo, estado, idFicha) " +
             "VALUES (1, 'EQ-001', 'SN-CUM-9982', 'Cummins', 'QSB6.7', 'Minería', 18500.00, 2, 3, 'Disponible', 1);",
             "INSERT INTO Equipo (idEquipo, codigo, numeroSerie, marca, modelo, aplicacion, precioBase, stockDisponible, stockMinimo, estado, idFicha) " +
@@ -105,16 +106,13 @@ public class InicializadorDB {
             return;
         }
 
-        try (Connection c = con;
-             Statement stmt = c.createStatement()) {
-
+        try (Connection c = con; Statement stmt = c.createStatement()) {
             for (String sql : sentencias) {
                 stmt.execute(sql);
             }
-            System.out.println(" Base de datos inicializada correctamente con tablas y datos de prueba.");
-
+            System.out.println("✅ Base de datos inicializada correctamente con tablas y datos de prueba.");
         } catch (SQLException e) {
-            System.err.println(" Error al inicializar tablas: " + e.getMessage());
+            System.err.println("❌ Error al inicializar tablas: " + e.getMessage());
         }
     }
 

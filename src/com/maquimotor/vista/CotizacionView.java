@@ -12,6 +12,8 @@ import com.maquimotor.modelo.Usuario;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -46,7 +48,7 @@ public class CotizacionView extends JFrame {
 
     private void initComponents() {
         setTitle("MaquiMotor Perú - Emisión Técnica de Cotizaciones");
-        setSize(780, 580);
+        setSize(960, 590);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(null);
@@ -55,48 +57,73 @@ public class CotizacionView extends JFrame {
         txtIdCotizacion = new JTextField(); txtIdCotizacion.setBounds(130, 20, 120, 25); add(txtIdCotizacion);
 
         JLabel lCli = new JLabel("Cliente (RUC/Razon):"); lCli.setBounds(280, 20, 140, 25); add(lCli);
-        cbClientes = new JComboBox<>(); cbClientes.setBounds(420, 20, 310, 25); add(cbClientes);
+        cbClientes = new JComboBox<>(); cbClientes.setBounds(420, 20, 470, 25); add(cbClientes);
 
         JLabel lEq = new JLabel("Seleccionar Motor:"); lEq.setBounds(30, 65, 120, 25); add(lEq);
-        cbEquipos = new JComboBox<>(); cbEquipos.setBounds(150, 65, 330, 25); add(cbEquipos);
+        cbEquipos = new JComboBox<>(); cbEquipos.setBounds(150, 65, 430, 25); add(cbEquipos);
 
-        JLabel lCant = new JLabel("Cantidad:"); lCant.setBounds(495, 65, 65, 25); add(lCant);
-        txtCantidad = new JTextField(); txtCantidad.setBounds(560, 65, 50, 25); add(txtCantidad);
+        JLabel lCant = new JLabel("Cantidad:"); lCant.setBounds(595, 65, 65, 25); add(lCant);
+        txtCantidad = new JTextField(); txtCantidad.setBounds(660, 65, 50, 25); add(txtCantidad);
 
         JButton btnAgregar = new JButton("+ Agregar");
-        btnAgregar.setBounds(625, 63, 105, 28);
+        btnAgregar.setBounds(720, 63, 90, 28);
         btnAgregar.addActionListener(e -> agregarEquipoADetalle());
         add(btnAgregar);
 
+        JButton btnQuitar = new JButton("- Quitar");
+        btnQuitar.setBounds(815, 63, 80, 28);
+        btnQuitar.setToolTipText("Quitar ítem seleccionado de la cotización");
+        btnQuitar.addActionListener(e -> quitarEquipoDeDetalle());
+        add(btnQuitar);
+
         String[] cols = {"Código", "Descripción", "Cantidad", "Precio Unit.", "Subtotal"};
-        modeloTabla = new DefaultTableModel(cols, 0);
+        modeloTabla = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
         tablaDetalles = new JTable(modeloTabla);
+        tablaDetalles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // Atajo: si presionas la tecla Supr/Delete en la tabla, también se elimina la fila
+        tablaDetalles.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+                    quitarEquipoDeDetalle();
+                }
+            }
+        });
+
         JScrollPane scroll = new JScrollPane(tablaDetalles);
-        scroll.setBounds(30, 110, 700, 240);
+        scroll.setBounds(30, 105, 880, 245);
         add(scroll);
 
         lblSubtotal = new JLabel("Subtotal: S/. 0.00"); lblSubtotal.setFont(new Font("Arial", Font.BOLD, 12));
-        lblSubtotal.setBounds(520, 360, 210, 22); add(lblSubtotal);
+        lblSubtotal.setBounds(690, 360, 220, 22); add(lblSubtotal);
 
         lblIgv = new JLabel("IGV (18%): S/. 0.00"); lblIgv.setFont(new Font("Arial", Font.BOLD, 12));
-        lblIgv.setBounds(520, 385, 210, 22); add(lblIgv);
+        lblIgv.setBounds(690, 385, 220, 22); add(lblIgv);
 
         lblTotal = new JLabel("Total: S/. 0.00"); lblTotal.setFont(new Font("Arial", Font.BOLD, 14));
         lblTotal.setForeground(new Color(0, 102, 204));
-        lblTotal.setBounds(520, 410, 210, 25); add(lblTotal);
+        lblTotal.setBounds(690, 410, 220, 25); add(lblTotal);
 
+        // Botones inferiores de acción (Distribución limpia de 3 botones)
         JButton btnGuardar = new JButton("Procesar y Reservar (RF-08)");
-        btnGuardar.setBounds(30, 470, 210, 35);
+        btnGuardar.setBounds(30, 470, 240, 36);
         btnGuardar.addActionListener(e -> procesarCotizacion());
         add(btnGuardar);
 
-        JButton btnExportar = new JButton("Exportar Proforma (RF-10)");
-        btnExportar.setBounds(255, 470, 200, 35);
-        btnExportar.addActionListener(e -> exportarProforma());
-        add(btnExportar);
+        JButton btnHistorial = new JButton("Historial / Reservas (48h)");
+        btnHistorial.setBounds(350, 470, 240, 36);
+        btnHistorial.addActionListener(e -> {
+            new HistorialCotizacionesView(this).setVisible(true);
+            this.setVisible(false);
+        });
+        add(btnHistorial);
 
         JButton btnVolver = new JButton("Volver al Menú");
-        btnVolver.setBounds(530, 470, 200, 35);
+        btnVolver.setBounds(670, 470, 240, 36);
         btnVolver.addActionListener(e -> {
             if (menuPadre != null) menuPadre.setVisible(true);
             else new MenuPrincipal().setVisible(true);
@@ -106,6 +133,10 @@ public class CotizacionView extends JFrame {
     }
 
     private void cargarCombos() {
+        cotizacionDAO.liberarCotizacionesExpiradas();
+        // Asignar automáticamente el siguiente correlativo libre
+        txtIdCotizacion.setText(String.valueOf(cotizacionDAO.obtenerSiguienteIdCotizacion()));
+
         cbClientes.removeAllItems();
         for (Cliente c : clienteDAO.listar()) {
             cbClientes.addItem(c);
@@ -144,10 +175,19 @@ public class CotizacionView extends JFrame {
                 return;
             }
 
-            // RF-07: Validación de existencias físicas
-            if (cant > seleccionado.getStockDisponible()) {
+            // Calcular cuánto ya se agregó de este mismo equipo en la tabla
+            int yaCotizado = 0;
+            for (DetalleCotizacion d : listaDetalles) {
+                if (d.getEquipo().getIdEquipo() == seleccionado.getIdEquipo()) {
+                    yaCotizado += d.getCantidad();
+                }
+            }
+
+            if ((yaCotizado + cant) > seleccionado.getStockDisponible()) {
                 JOptionPane.showMessageDialog(this, "⚠️ Stock insuficiente para el equipo seleccionado.\n" +
-                        "Disponible actualmente: " + seleccionado.getStockDisponible() + " unidades.", "Stock Insuficiente", JOptionPane.ERROR_MESSAGE);
+                        "Disponible actualmente: " + seleccionado.getStockDisponible() + " unidades.\n" +
+                        (yaCotizado > 0 ? "Ya agregaste en esta cotización: " + yaCotizado + " unidades." : ""),
+                        "Stock Insuficiente", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -169,6 +209,18 @@ public class CotizacionView extends JFrame {
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Ingrese una cantidad entera válida.", "Formato Inválido", JOptionPane.WARNING_MESSAGE);
         }
+    }
+
+    private void quitarEquipoDeDetalle() {
+        int fila = tablaDetalles.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione la fila que desea retirar de la cotización.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        listaDetalles.remove(fila);
+        modeloTabla.removeRow(fila);
+        recalcularTotales();
     }
 
     private void recalcularTotales() {
@@ -197,25 +249,43 @@ public class CotizacionView extends JFrame {
         try {
             int idCot = Integer.parseInt(txtIdCotizacion.getText().trim());
             Cliente cl = (Cliente) cbClientes.getSelectedItem();
-            if (cl == null) return;
+            if (cl == null) {
+                JOptionPane.showMessageDialog(this, "Seleccione un cliente válido.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
             double subtotal = 0.0;
             for (DetalleCotizacion d : listaDetalles) subtotal += d.getSubtotalItem();
             double igv = subtotal * 0.18;
             double total = subtotal + igv;
 
-            int idUsr = usuarioActual != null ? usuarioActual.getIdUsuario() : 1;
+            int idUsr = (usuarioActual != null && usuarioActual.getIdUsuario() > 0) ? usuarioActual.getIdUsuario() : 1;
             Cotizacion cot = new Cotizacion(idCot, cl.getIdCliente(), idUsr, subtotal, igv, total);
 
             boolean ok = cotizacionDAO.registrarCotizacionCompleta(cot, listaDetalles);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "¡Cotización N° " + idCot + " procesada con éxito!\nLas unidades han quedado reservadas en almacén.");
+                JOptionPane.showMessageDialog(this, "¡Cotización N° " + idCot + " procesada con éxito!\nLas unidades han quedado reservadas por 48 horas.");
+
+                // Confirmación para exportar antes de vaciar la tabla
+                int respExportar = JOptionPane.showConfirmDialog(this,
+                        "¿Desea exportar la Proforma Técnica en archivo de texto ahora?",
+                        "Exportar Proforma", JOptionPane.YES_NO_OPTION);
+
+                if (respExportar == JOptionPane.YES_OPTION) {
+                    exportarProforma();
+                }
+
+                // Limpieza de campos para la siguiente operación
+                listaDetalles.clear();
+                modeloTabla.setRowCount(0);
+                recalcularTotales();
+                txtCantidad.setText("");
                 cargarCombos();
             } else {
-                JOptionPane.showMessageDialog(this, "Error al registrar la cotización o stock no disponible.", "Error Transaccional", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "No se pudo procesar la cotización.\nVerifique si el N° " + idCot + " ya existe o si las unidades superaron el stock.", "Aviso", JOptionPane.ERROR_MESSAGE);
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "El ID de la cotización debe ser numérico.", "Error", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "El ID de la cotización debe ser un número entero.", "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
 
